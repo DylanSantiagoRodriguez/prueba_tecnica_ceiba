@@ -4,6 +4,6 @@ import com.bikerental.application.dto.response.RentalResponse;
 
 import java.util.List;
 
-public interface GetActiveRentalsUseCase {
-    List<RentalResponse> getActiveRentals();
+public interface GetRentalsUseCase {
+    List<RentalResponse> getRentals(Boolean finished);
 }

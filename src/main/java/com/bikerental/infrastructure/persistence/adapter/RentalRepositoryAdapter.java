@@ -41,14 +41,22 @@ public class RentalRepositoryAdapter implements RentalRepository {
     }
 
     @Override
+    public List<Rental> findAll() {
+        return jpaRepository.findAll()
+                .stream().map(RentalMapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
     public List<Rental> findByBikeCode(String bikeCode) {
         return jpaRepository.findByBikeCode(bikeCode)
                 .stream().map(RentalMapper::toDomain).collect(Collectors.toList());
     }
 
     @Override
-    public List<Rental> findActive() {
-        return jpaRepository.findByEndTimeIsNull()
-                .stream().map(RentalMapper::toDomain).collect(Collectors.toList());
+    public List<Rental> findByFinished(boolean finished) {
+        List<RentalEntity> entities = finished
+                ? jpaRepository.findByEndTimeIsNotNull()
+                : jpaRepository.findByEndTimeIsNull();
+        return entities.stream().map(RentalMapper::toDomain).collect(Collectors.toList());
     }
 }

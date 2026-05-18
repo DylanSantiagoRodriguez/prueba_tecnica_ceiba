@@ -27,7 +27,7 @@ public class RentalService implements
         FinishRentalUseCase,
         GetAvailableBikesUseCase,
         GetAllBikesUseCase,
-        GetActiveRentalsUseCase,
+        GetRentalsUseCase,
         GetRentalHistoryUseCase {
 
     private final BikeRepository bikeRepository;
@@ -105,9 +105,11 @@ public class RentalService implements
     }
 
     @Override
-    public List<RentalResponse> getActiveRentals() {
-        return rentalRepository.findActive()
-                .stream().map(this::toRentalResponse).collect(Collectors.toList());
+    public List<RentalResponse> getRentals(Boolean finished) {
+        List<Rental> rentals = finished == null
+                ? rentalRepository.findAll()
+                : rentalRepository.findByFinished(finished);
+        return rentals.stream().map(this::toRentalResponse).collect(Collectors.toList());
     }
 
     @Override

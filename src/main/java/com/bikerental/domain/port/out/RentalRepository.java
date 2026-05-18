@@ -8,6 +8,7 @@ import java.util.Optional;
 public interface RentalRepository {
     Rental save(Rental rental);
     Optional<Rental> findById(Long id);
+    List<Rental> findAll();
     List<Rental> findByBikeCode(String bikeCode);
-    List<Rental> findActive();
+    List<Rental> findByFinished(boolean finished);
 }

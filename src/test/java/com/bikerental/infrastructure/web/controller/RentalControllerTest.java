@@ -6,7 +6,7 @@ import com.bikerental.domain.exception.RentalAlreadyFinishedException;
 import com.bikerental.domain.exception.RentalNotFoundException;
 import com.bikerental.domain.model.BikeStatus;
 import com.bikerental.domain.port.in.FinishRentalUseCase;
-import com.bikerental.domain.port.in.GetActiveRentalsUseCase;
+import com.bikerental.domain.port.in.GetRentalsUseCase;
 import com.bikerental.domain.port.in.StartRentalUseCase;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -37,7 +36,7 @@ class RentalControllerTest {
 
     @MockBean private StartRentalUseCase startRentalUseCase;
     @MockBean private FinishRentalUseCase finishRentalUseCase;
-    @MockBean private GetActiveRentalsUseCase getActiveRentalsUseCase;
+    @MockBean private GetRentalsUseCase getRentalsUseCase;
 
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 1, 1, 10, 0);
 
@@ -51,12 +50,30 @@ class RentalControllerTest {
     }
 
     @Test
-    void obtener_alquileres_activos_retorna_200() throws Exception {
-        when(getActiveRentalsUseCase.getActiveRentals()).thenReturn(List.of(activeRentalResponse()));
+    void obtener_todas_las_rentas_retorna_200() throws Exception {
+        when(getRentalsUseCase.getRentals(null)).thenReturn(List.of(activeRentalResponse()));
 
         mockMvc.perform(get("/api/rentals"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].finished").value(false));
+    }
+
+    @Test
+    void obtener_rentas_activas_con_filtro_retorna_200() throws Exception {
+        when(getRentalsUseCase.getRentals(false)).thenReturn(List.of(activeRentalResponse()));
+
+        mockMvc.perform(get("/api/rentals").param("finished", "false"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].finished").value(false));
+    }
+
+    @Test
+    void obtener_rentas_terminadas_con_filtro_retorna_200() throws Exception {
+        when(getRentalsUseCase.getRentals(true)).thenReturn(List.of(finishedRentalResponse()));
+
+        mockMvc.perform(get("/api/rentals").param("finished", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].finished").value(true));
     }
 
     @Test

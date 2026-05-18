@@ -3,7 +3,7 @@ package com.bikerental.infrastructure.web.controller;
 import com.bikerental.application.dto.request.StartRentalRequest;
 import com.bikerental.application.dto.response.RentalResponse;
 import com.bikerental.domain.port.in.FinishRentalUseCase;
-import com.bikerental.domain.port.in.GetActiveRentalsUseCase;
+import com.bikerental.domain.port.in.GetRentalsUseCase;
 import com.bikerental.domain.port.in.StartRentalUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -17,19 +17,20 @@ public class RentalController {
 
     private final StartRentalUseCase startRentalUseCase;
     private final FinishRentalUseCase finishRentalUseCase;
-    private final GetActiveRentalsUseCase getActiveRentalsUseCase;
+    private final GetRentalsUseCase getRentalsUseCase;
 
     public RentalController(StartRentalUseCase startRentalUseCase,
                             FinishRentalUseCase finishRentalUseCase,
-                            GetActiveRentalsUseCase getActiveRentalsUseCase) {
+                            GetRentalsUseCase getRentalsUseCase) {
         this.startRentalUseCase = startRentalUseCase;
         this.finishRentalUseCase = finishRentalUseCase;
-        this.getActiveRentalsUseCase = getActiveRentalsUseCase;
+        this.getRentalsUseCase = getRentalsUseCase;
     }
 
     @GetMapping
-    public ResponseEntity<List<RentalResponse>> getActiveRentals() {
-        return ResponseEntity.ok(getActiveRentalsUseCase.getActiveRentals());
+    public ResponseEntity<List<RentalResponse>> getRentals(
+            @RequestParam(required = false) Boolean finished) {
+        return ResponseEntity.ok(getRentalsUseCase.getRentals(finished));
     }
 
     @PostMapping

@@ -149,6 +149,35 @@ class RentalServiceTest {
     }
 
     @Test
+    void consultar_todas_rentas_sin_filtro_retorna_todas() {
+        when(rentalRepository.findAll()).thenReturn(List.of(activeRental, finishedRental));
+
+        List<RentalResponse> result = service.getRentals(null);
+
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    void consultar_rentas_activas_retorna_solo_activas() {
+        when(rentalRepository.findByFinished(false)).thenReturn(List.of(activeRental));
+
+        List<RentalResponse> result = service.getRentals(false);
+
+        assertEquals(1, result.size());
+        assertFalse(result.get(0).isFinished());
+    }
+
+    @Test
+    void consultar_rentas_terminadas_retorna_solo_terminadas() {
+        when(rentalRepository.findByFinished(true)).thenReturn(List.of(finishedRental));
+
+        List<RentalResponse> result = service.getRentals(true);
+
+        assertEquals(1, result.size());
+        assertTrue(result.get(0).isFinished());
+    }
+
+    @Test
     void historial_bicicleta_retorna_lista_de_alquileres() {
         when(rentalRepository.findByBikeCode("BIC-001"))
                 .thenReturn(List.of(activeRental, finishedRental));
