@@ -3,7 +3,9 @@ package com.bikerental.infrastructure.web.controller;
 import com.bikerental.application.dto.request.RegisterBikeRequest;
 import com.bikerental.application.dto.response.BikeResponse;
 import com.bikerental.application.dto.response.RentalResponse;
+import com.bikerental.domain.model.BikeStatus;
 import com.bikerental.domain.model.BikeType;
+import com.bikerental.domain.port.in.GetAllBikesUseCase;
 import com.bikerental.domain.port.in.GetAvailableBikesUseCase;
 import com.bikerental.domain.port.in.GetRentalHistoryUseCase;
 import com.bikerental.domain.port.in.RegisterBikeUseCase;
@@ -18,15 +20,24 @@ import java.util.List;
 public class BikeController {
 
     private final RegisterBikeUseCase registerBikeUseCase;
+    private final GetAllBikesUseCase getAllBikesUseCase;
     private final GetAvailableBikesUseCase getAvailableBikesUseCase;
     private final GetRentalHistoryUseCase getRentalHistoryUseCase;
 
     public BikeController(RegisterBikeUseCase registerBikeUseCase,
+                          GetAllBikesUseCase getAllBikesUseCase,
                           GetAvailableBikesUseCase getAvailableBikesUseCase,
                           GetRentalHistoryUseCase getRentalHistoryUseCase) {
         this.registerBikeUseCase = registerBikeUseCase;
+        this.getAllBikesUseCase = getAllBikesUseCase;
         this.getAvailableBikesUseCase = getAvailableBikesUseCase;
         this.getRentalHistoryUseCase = getRentalHistoryUseCase;
+    }
+
+    @GetMapping("")
+    public ResponseEntity<List<BikeResponse>> getAll(
+            @RequestParam(required = false) BikeStatus status) {
+        return ResponseEntity.ok(getAllBikesUseCase.getAllBikes(status));
     }
 
     @PostMapping

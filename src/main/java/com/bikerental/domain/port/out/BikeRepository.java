@@ -10,6 +10,7 @@ import java.util.Optional;
 public interface BikeRepository {
     Optional<Bike> findByCode(String code);
     Bike save(Bike bike);
+    List<Bike> findAll();
     List<Bike> findByStatus(BikeStatus status);
     List<Bike> findByStatusAndType(BikeStatus status, BikeType type);
 }

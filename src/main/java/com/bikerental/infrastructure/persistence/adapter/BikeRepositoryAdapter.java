@@ -37,6 +37,12 @@ public class BikeRepositoryAdapter implements BikeRepository {
     }
 
     @Override
+    public List<Bike> findAll() {
+        return jpaRepository.findAll()
+                .stream().map(BikeMapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
     public List<Bike> findByStatus(BikeStatus status) {
         return jpaRepository.findByStatus(status)
                 .stream().map(BikeMapper::toDomain).collect(Collectors.toList());

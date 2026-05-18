@@ -27,6 +27,7 @@ public class RentalService implements
         StartRentalUseCase,
         FinishRentalUseCase,
         GetAvailableBikesUseCase,
+        GetAllBikesUseCase,
         GetRentalHistoryUseCase {
 
     private final BikeRepository bikeRepository;
@@ -92,6 +93,14 @@ public class RentalService implements
         List<Bike> bikes = type != null
                 ? bikeRepository.findByStatusAndType(com.bikerental.domain.model.BikeStatus.DISPONIBLE, type)
                 : bikeRepository.findByStatus(com.bikerental.domain.model.BikeStatus.DISPONIBLE);
+        return bikes.stream().map(this::toBikeResponse).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BikeResponse> getAllBikes(com.bikerental.domain.model.BikeStatus status) {
+        List<Bike> bikes = status != null
+                ? bikeRepository.findByStatus(status)
+                : bikeRepository.findAll();
         return bikes.stream().map(this::toBikeResponse).collect(Collectors.toList());
     }
 

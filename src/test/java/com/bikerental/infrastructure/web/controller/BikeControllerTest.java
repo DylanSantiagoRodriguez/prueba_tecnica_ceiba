@@ -5,6 +5,7 @@ import com.bikerental.application.dto.response.RentalResponse;
 import com.bikerental.domain.exception.BikeNotFoundException;
 import com.bikerental.domain.model.BikeStatus;
 import com.bikerental.domain.model.BikeType;
+import com.bikerental.domain.port.in.GetAllBikesUseCase;
 import com.bikerental.domain.port.in.GetAvailableBikesUseCase;
 import com.bikerental.domain.port.in.GetRentalHistoryUseCase;
 import com.bikerental.domain.port.in.RegisterBikeUseCase;
@@ -33,6 +34,7 @@ class BikeControllerTest {
     @Autowired private ObjectMapper objectMapper;
 
     @MockBean private RegisterBikeUseCase registerBikeUseCase;
+    @MockBean private GetAllBikesUseCase getAllBikesUseCase;
     @MockBean private GetAvailableBikesUseCase getAvailableBikesUseCase;
     @MockBean private GetRentalHistoryUseCase getRentalHistoryUseCase;
 
