@@ -35,7 +35,7 @@ public class RentalResponse {
     public String getCustomerName() { return customerName; }
     public LocalDateTime getStartTime() { return startTime; }
     public LocalDateTime getEndTime() { return endTime; }
-    public Integer getRealDurationHours() { return realDurationMinutes; }
+    public Integer getRealDurationMinutes() { return realDurationMinutes; }
     public BigDecimal getTotalCost() { return totalCost; }
     public boolean isHasPenalty() { return hasPenalty; }
     public boolean isFinished() { return finished; }

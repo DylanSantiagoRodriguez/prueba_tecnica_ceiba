@@ -12,5 +12,7 @@ public interface BikeRepository {
     Bike save(Bike bike);
     List<Bike> findAll();
     List<Bike> findByStatus(BikeStatus status);
+    List<Bike> findByType(BikeType type);
     List<Bike> findByStatusAndType(BikeStatus status, BikeType type);
+    void deleteByCode(String code);
 }

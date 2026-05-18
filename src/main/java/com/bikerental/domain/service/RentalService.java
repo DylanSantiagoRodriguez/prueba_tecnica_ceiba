@@ -4,6 +4,7 @@ import com.bikerental.application.dto.request.RegisterBikeRequest;
 import com.bikerental.application.dto.request.StartRentalRequest;
 import com.bikerental.application.dto.response.BikeResponse;
 import com.bikerental.application.dto.response.RentalResponse;
+import com.bikerental.domain.exception.BikeInUseException;
 import com.bikerental.domain.exception.BikeNotAvailableException;
 import com.bikerental.domain.exception.BikeNotFoundException;
 import com.bikerental.domain.exception.RentalAlreadyFinishedException;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 @Service
 public class RentalService implements
         RegisterBikeUseCase,
+        DeleteBikeUseCase,
         StartRentalUseCase,
         FinishRentalUseCase,
         GetAvailableBikesUseCase,
@@ -43,6 +45,16 @@ public class RentalService implements
         Bike bike = new Bike(request.getCode(), request.getType(), request.getStatus());
         Bike saved = bikeRepository.save(bike);
         return toBikeResponse(saved);
+    }
+
+    @Override
+    public void deleteBike(String code) {
+        Bike bike = bikeRepository.findByCode(code)
+                .orElseThrow(() -> new BikeNotFoundException(code));
+        if (bike.getStatus() == com.bikerental.domain.model.BikeStatus.ALQUILADA) {
+            throw new BikeInUseException(code);
+        }
+        bikeRepository.deleteByCode(code);
     }
 
     @Override
@@ -97,10 +109,18 @@ public class RentalService implements
     }
 
     @Override
-    public List<BikeResponse> getAllBikes(com.bikerental.domain.model.BikeStatus status) {
-        List<Bike> bikes = status != null
-                ? bikeRepository.findByStatus(status)
-                : bikeRepository.findAll();
+    public List<BikeResponse> getAllBikes(com.bikerental.domain.model.BikeStatus status,
+                                         com.bikerental.domain.model.BikeType type) {
+        List<Bike> bikes;
+        if (status != null && type != null) {
+            bikes = bikeRepository.findByStatusAndType(status, type);
+        } else if (status != null) {
+            bikes = bikeRepository.findByStatus(status);
+        } else if (type != null) {
+            bikes = bikeRepository.findByType(type);
+        } else {
+            bikes = bikeRepository.findAll();
+        }
         return bikes.stream().map(this::toBikeResponse).collect(Collectors.toList());
     }
 

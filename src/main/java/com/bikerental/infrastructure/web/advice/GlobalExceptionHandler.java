@@ -1,5 +1,6 @@
 package com.bikerental.infrastructure.web.advice;
 
+import com.bikerental.domain.exception.BikeInUseException;
 import com.bikerental.domain.exception.BikeNotAvailableException;
 import com.bikerental.domain.exception.BikeNotFoundException;
 import com.bikerental.domain.exception.RentalAlreadyFinishedException;
@@ -29,6 +30,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BikeNotAvailableException.class)
     public ResponseEntity<ErrorResponse> handleBikeNotAvailable(BikeNotAvailableException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(409, "CONFLICT", ex.getMessage()));
+    }
+
+    @ExceptionHandler(BikeInUseException.class)
+    public ResponseEntity<ErrorResponse> handleBikeInUse(BikeInUseException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse(409, "CONFLICT", ex.getMessage()));
     }

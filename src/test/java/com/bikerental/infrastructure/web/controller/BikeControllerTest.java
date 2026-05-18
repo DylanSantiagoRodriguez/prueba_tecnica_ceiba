@@ -1,10 +1,11 @@
 package com.bikerental.infrastructure.web.controller;
 
 import com.bikerental.application.dto.response.BikeResponse;
-import com.bikerental.application.dto.response.RentalResponse;
+import com.bikerental.domain.exception.BikeInUseException;
 import com.bikerental.domain.exception.BikeNotFoundException;
 import com.bikerental.domain.model.BikeStatus;
 import com.bikerental.domain.model.BikeType;
+import com.bikerental.domain.port.in.DeleteBikeUseCase;
 import com.bikerental.domain.port.in.GetAllBikesUseCase;
 import com.bikerental.domain.port.in.GetAvailableBikesUseCase;
 import com.bikerental.domain.port.in.GetRentalHistoryUseCase;
@@ -21,8 +22,10 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -34,6 +37,7 @@ class BikeControllerTest {
     @Autowired private ObjectMapper objectMapper;
 
     @MockBean private RegisterBikeUseCase registerBikeUseCase;
+    @MockBean private DeleteBikeUseCase deleteBikeUseCase;
     @MockBean private GetAllBikesUseCase getAllBikesUseCase;
     @MockBean private GetAvailableBikesUseCase getAvailableBikesUseCase;
     @MockBean private GetRentalHistoryUseCase getRentalHistoryUseCase;
@@ -83,6 +87,32 @@ class BikeControllerTest {
         mockMvc.perform(get("/api/bikes/available").param("type", "MONTANA"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].type").value("MONTANA"));
+    }
+
+    @Test
+    void eliminar_bicicleta_existente_retorna_204() throws Exception {
+        doNothing().when(deleteBikeUseCase).deleteBike("BIC-001");
+
+        mockMvc.perform(delete("/api/bikes/BIC-001"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void eliminar_bicicleta_inexistente_retorna_404() throws Exception {
+        doThrow(new BikeNotFoundException("BIC-999")).when(deleteBikeUseCase).deleteBike("BIC-999");
+
+        mockMvc.perform(delete("/api/bikes/BIC-999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    void eliminar_bicicleta_alquilada_retorna_409() throws Exception {
+        doThrow(new BikeInUseException("BIC-001")).when(deleteBikeUseCase).deleteBike("BIC-001");
+
+        mockMvc.perform(delete("/api/bikes/BIC-001"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
     }
 
     @Test

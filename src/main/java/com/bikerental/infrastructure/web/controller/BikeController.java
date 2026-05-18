@@ -5,6 +5,7 @@ import com.bikerental.application.dto.response.BikeResponse;
 import com.bikerental.application.dto.response.RentalResponse;
 import com.bikerental.domain.model.BikeStatus;
 import com.bikerental.domain.model.BikeType;
+import com.bikerental.domain.port.in.DeleteBikeUseCase;
 import com.bikerental.domain.port.in.GetAllBikesUseCase;
 import com.bikerental.domain.port.in.GetAvailableBikesUseCase;
 import com.bikerental.domain.port.in.GetRentalHistoryUseCase;
@@ -20,15 +21,18 @@ import java.util.List;
 public class BikeController {
 
     private final RegisterBikeUseCase registerBikeUseCase;
+    private final DeleteBikeUseCase deleteBikeUseCase;
     private final GetAllBikesUseCase getAllBikesUseCase;
     private final GetAvailableBikesUseCase getAvailableBikesUseCase;
     private final GetRentalHistoryUseCase getRentalHistoryUseCase;
 
     public BikeController(RegisterBikeUseCase registerBikeUseCase,
+                          DeleteBikeUseCase deleteBikeUseCase,
                           GetAllBikesUseCase getAllBikesUseCase,
                           GetAvailableBikesUseCase getAvailableBikesUseCase,
                           GetRentalHistoryUseCase getRentalHistoryUseCase) {
         this.registerBikeUseCase = registerBikeUseCase;
+        this.deleteBikeUseCase = deleteBikeUseCase;
         this.getAllBikesUseCase = getAllBikesUseCase;
         this.getAvailableBikesUseCase = getAvailableBikesUseCase;
         this.getRentalHistoryUseCase = getRentalHistoryUseCase;
@@ -36,8 +40,9 @@ public class BikeController {
 
     @GetMapping("")
     public ResponseEntity<List<BikeResponse>> getAll(
-            @RequestParam(required = false) BikeStatus status) {
-        return ResponseEntity.ok(getAllBikesUseCase.getAllBikes(status));
+            @RequestParam(required = false) BikeStatus status,
+            @RequestParam(required = false) BikeType type) {
+        return ResponseEntity.ok(getAllBikesUseCase.getAllBikes(status, type));
     }
 
     @PostMapping
@@ -49,6 +54,12 @@ public class BikeController {
     public ResponseEntity<List<BikeResponse>> getAvailable(
             @RequestParam(required = false) BikeType type) {
         return ResponseEntity.ok(getAvailableBikesUseCase.getAvailableBikes(type));
+    }
+
+    @DeleteMapping("/{code}")
+    public ResponseEntity<Void> delete(@PathVariable String code) {
+        deleteBikeUseCase.deleteBike(code);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{code}/history")

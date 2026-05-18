@@ -2,9 +2,10 @@ package com.bikerental.domain.port.in;
 
 import com.bikerental.application.dto.response.BikeResponse;
 import com.bikerental.domain.model.BikeStatus;
+import com.bikerental.domain.model.BikeType;
 
 import java.util.List;
 
 public interface GetAllBikesUseCase {
-    List<BikeResponse> getAllBikes(BikeStatus status);
+    List<BikeResponse> getAllBikes(BikeStatus status, BikeType type);
 }
