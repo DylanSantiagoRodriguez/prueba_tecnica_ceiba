@@ -21,14 +21,7 @@ cd bike-rental-api
 
 La API queda disponible en `http://localhost:8080`.
 
-Las 5 bicicletas de referencia ya están precargadas en `bikerental.db` — no se necesita ninguna configuración adicional de base de datos.
-
-### Reiniciar la base de datos desde cero
-
-```bash
-rm bikerental.db
-./mvnw spring-boot:run
-```
+Las 5 bicicletas de referencia se cargan automáticamente al iniciar (`DataInitializer` es idempotente).
 
 ### Ejecutar los tests
 
@@ -53,7 +46,7 @@ rm bikerental.db
 Se eligió **Arquitectura Hexagonal (Ports & Adapters)** por tres razones concretas:
 
 1. **Aislamiento del dominio:** las reglas de negocio (`Rental`, `Bike`, `RentalService`) no tienen ninguna dependencia de Spring, JPA ni HTTP. Se pueden probar con JUnit puro sin levantar contexto.
-2. **Separación de responsabilidades:** el dominio define *qué* necesita (puertos), la infraestructura decide *cómo* lo implementa (adapters). Cambiar de SQLite a PostgreSQL solo requiere tocar la capa de persistencia.
+2. **Separación de responsabilidades:** el dominio define *qué* necesita (puertos), la infraestructura decide *cómo* lo implementa (adapters). Cambiar el motor de base de datos solo requiere tocar la capa de persistencia.
 3. **Testabilidad por capas:** domain tests sin Spring, service tests con Mockito, controller tests con MockMvc — cada capa se prueba de forma independiente.
 
 ---
@@ -65,7 +58,7 @@ Se eligió **Arquitectura Hexagonal (Ports & Adapters)** por tres razones concre
 │                   Infrastructure                     │
 │                                                      │
 │   ┌─────────────┐              ┌──────────────────┐  │
-│   │  Controllers │              │  JPA / SQLite    │  │
+│   │  Controllers │              │  JPA / PostgreSQL│  │
 │   │  (HTTP/JSON) │              │  Adapters        │  │
 │   └──────┬──────┘              └────────┬─────────┘  │
 │          │                              │             │
@@ -118,7 +111,7 @@ Contiene todo lo que depende de tecnologías concretas. Los adapters implementan
 puertos de salida del dominio: `BikeRepositoryAdapter` implementa `BikeRepository`
 usando JPA por debajo. Los controllers implementan HTTP usando los puertos de entrada.
 
-Esta separación es la que permitió cambiar de H2 a SQLite sin modificar ninguna clase
+Esta separación es la que permitió cambiar de H2 a PostgreSQL sin modificar ninguna clase
 del dominio ni ningún test de dominio. Solo cambiaron `pom.xml` y
 `application.properties`.
 
@@ -143,16 +136,12 @@ manuales con métodos estáticos son más explícitos y no requieren procesamien
 anotaciones en tiempo de compilación. MapStruct es la elección correcta en proyectos
 más grandes donde la cantidad de conversiones justifica el setup.
 
-**SQLite con archivo incluido en el repositorio.** Permite que el evaluador clone el
-proyecto y lo ejecute directamente con los datos de referencia ya cargados, sin
-instalar ni configurar ningún motor de base de datos externo. El `DataInitializer`
-es idempotente (verifica existencia antes de insertar) para que la aplicación no
-falle al reiniciarse con el archivo ya poblado.
+**PostgreSQL hosteado en Railway.** La base de datos vive en un servicio externo; las credenciales se inyectan como variables de entorno (`PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`). Para desarrollo local basta con un archivo `.env` en la raíz del proyecto — `spring-dotenv` lo carga automáticamente. El `DataInitializer` es idempotente (verifica existencia antes de insertar) para que el arranque sea seguro en cualquier entorno.
 
 **Flujo de una petición:**
 
 ```
-HTTP Request → Controller → UseCase (port in) → RentalService → Repository (port out) → JPA Adapter → SQLite
+HTTP Request → Controller → UseCase (port in) → RentalService → Repository (port out) → JPA Adapter → PostgreSQL
 ```
 
 ---
@@ -165,74 +154,232 @@ HTTP Request → Controller → UseCase (port in) → RentalService → Reposito
 | Spring Boot | 3.2.5 | Framework principal (web, DI, test) |
 | Spring Data JPA | incluida | Abstracción de persistencia |
 | Spring Validation | incluida | Validación de DTOs con Bean Validation |
-| SQLite JDBC | 3.45.3.0 | Driver de base de datos |
-| Hibernate Community Dialects | incluida | Dialecto SQLite para Hibernate 6 |
+| PostgreSQL JDBC | incluida en Boot | Driver de base de datos |
+| spring-dotenv | 3.0.0 | Carga variables de entorno desde `.env` en local |
 | JUnit 5 | incluida en starter-test | Tests unitarios e integración |
 | Mockito | incluida en starter-test | Mocks en tests de servicio |
 | MockMvc | incluida en starter-test | Tests de capa web |
 
-### Por qué SQLite
+### Por qué PostgreSQL en Railway
 
-El archivo `bikerental.db` se incluye en el repositorio con los datos de referencia precargados. El evaluador clona el proyecto y ejecuta `./mvnw spring-boot:run` — sin instalar ni configurar ningún motor de base de datos externo.
+Base de datos gestionada, sin configuración local. El evaluador solo necesita un archivo `.env` con las variables `PG*` para conectarse. En producción (Railway), las variables se inyectan automáticamente.
 
 ---
 
 ## Endpoints
 
-| Método | URL | Descripción | Código |
-|---|---|---|---|
-| `POST` | `/api/bikes` | Registrar bicicleta | 201 |
-| `GET` | `/api/bikes` | Listar todas (`?status=DISPONIBLE\|ALQUILADA\|EN_MANTENIMIENTO`) | 200 |
-| `GET` | `/api/bikes/available` | Solo disponibles (filtro opcional `?type=URBANA\|MONTANA\|ELECTRICA`) | 200 |
-| `GET` | `/api/bikes/{code}/history` | Historial de alquileres por bicicleta | 200 |
-| `POST` | `/api/rentals` | Iniciar alquiler | 201 |
-| `GET` | `/api/rentals` | Ver alquileres activos | 200 |
-| `PATCH` | `/api/rentals/{id}/finish` | Finalizar alquiler  | 200 |
+Base URL: `http://localhost:8080`
 
-### Ejemplos con curl
+Todos los errores devuelven el mismo formato:
+```json
+{ "status": 404, "error": "NOT_FOUND", "message": "Bicicleta BIC-999 no encontrada" }
+```
+
+---
+
+### Bicicletas
+
+#### `POST /api/bikes` — Registrar bicicleta
+
+**Body (JSON):**
+```json
+{
+  "code": "BIC-010",
+  "type": "URBANA",
+  "status": "DISPONIBLE"
+}
+```
+- `type`: `URBANA` · `MONTANA` · `ELECTRICA`
+- `status`: `DISPONIBLE` · `ALQUILADA` · `EN_MANTENIMIENTO`
+
+**Respuesta `201`:**
+```json
+{ "code": "BIC-010", "type": "URBANA", "status": "DISPONIBLE" }
+```
+
+**Errores:** `400` si falta `code`, `type` o `status`.
+
+---
+
+#### `GET /api/bikes` — Listar bicicletas
+
+**Query params (todos opcionales, combinables):**
+
+| Parámetro | Valores | Descripción |
+|---|---|---|
+| `status` | `DISPONIBLE` · `ALQUILADA` · `EN_MANTENIMIENTO` | Filtra por estado |
+| `type` | `URBANA` · `MONTANA` · `ELECTRICA` | Filtra por tipo |
+
+**Respuesta `200`:**
+```json
+[
+  { "code": "BIC-001", "type": "URBANA", "status": "DISPONIBLE" },
+  { "code": "BIC-002", "type": "MONTANA", "status": "ALQUILADA" }
+]
+```
 
 ```bash
-# Registrar bicicleta
-curl -X POST http://localhost:8080/api/bikes \
-  -H "Content-Type: application/json" \
-  -d '{"code":"BIC-010","type":"URBANA","status":"DISPONIBLE"}'
+GET /api/bikes                              # todas
+GET /api/bikes?status=DISPONIBLE            # por estado
+GET /api/bikes?type=MONTANA                 # por tipo
+GET /api/bikes?status=DISPONIBLE&type=URBANA  # combinables
+```
 
-# Ver todas las bicicletas
-curl http://localhost:8080/api/bikes
+---
 
-# Ver solo disponibles
-curl http://localhost:8080/api/bikes/available
+#### `GET /api/bikes/available` — Bicicletas disponibles
 
-# Filtrar disponibles por tipo
-curl "http://localhost:8080/api/bikes/available?type=MONTANA"
+Equivale a `GET /api/bikes?status=DISPONIBLE` con filtro adicional por tipo.
 
-# Iniciar alquiler (estimatedMinutes en minutos)
-curl -X POST http://localhost:8080/api/rentals \
-  -H "Content-Type: application/json" \
-  -d '{"bikeCode":"BIC-001","customerName":"Ana García","estimatedMinutes":90}'
+**Query params (opcional):**
 
-# Ver alquileres activos
-curl http://localhost:8080/api/rentals
+| Parámetro | Valores | Descripción |
+|---|---|---|
+| `type` | `URBANA` · `MONTANA` · `ELECTRICA` | Filtra por tipo dentro de las disponibles |
 
-# Finalizar alquiler — sin body, el tiempo se captura automáticamente
-curl -X PATCH http://localhost:8080/api/rentals/1/finish
+**Respuesta `200`:** igual que `/api/bikes`.
 
-# Historial de una bicicleta
+```bash
+GET /api/bikes/available              # todas las disponibles
+GET /api/bikes/available?type=MONTANA # disponibles de tipo MONTANA
+```
+
+---
+
+#### `DELETE /api/bikes/{code}` — Eliminar bicicleta
+
+**Path param:** `code` — código de la bicicleta.
+
+**Respuesta `204`:** sin body.
+
+**Errores:**
+- `404` — bicicleta no encontrada.
+- `409` — la bicicleta tiene un alquiler activo; no se puede eliminar.
+
+```bash
+curl -X DELETE http://localhost:8080/api/bikes/BIC-010
+```
+
+---
+
+#### `GET /api/bikes/{code}/history` — Historial de alquileres
+
+**Path param:** `code` — código de la bicicleta.
+
+**Respuesta `200`:**
+```json
+[
+  {
+    "id": 1,
+    "bikeCode": "BIC-001",
+    "customerName": "Ana García",
+    "startTime": "2026-05-18T10:00:00",
+    "endTime": "2026-05-18T12:15:00",
+    "realDurationMinutes": 135,
+    "totalCost": 10500.00,
+    "hasPenalty": true,
+    "finished": true
+  }
+]
+```
+
+- `endTime` / `realDurationMinutes` / `totalCost` son `null` si el alquiler está activo.
+- `hasPenalty: true` indica que se aplicó el 50% de recargo por devolución tardía.
+
+**Errores:** `404` — bicicleta no encontrada.
+
+```bash
 curl http://localhost:8080/api/bikes/BIC-001/history
+```
+
+---
+
+### Alquileres
+
+#### `POST /api/rentals` — Iniciar alquiler
+
+**Body (JSON):**
+```json
+{
+  "bikeCode": "BIC-001",
+  "customerName": "Ana García",
+  "estimatedMinutes": 90
+}
+```
+- `estimatedMinutes`: duración estimada en minutos (entero positivo). Se usa para calcular la multa si hay retraso.
+
+**Respuesta `201`:**
+```json
+{
+  "id": 1,
+  "bikeCode": "BIC-001",
+  "customerName": "Ana García",
+  "startTime": "2026-05-18T10:00:00",
+  "endTime": null,
+  "realDurationMinutes": null,
+  "totalCost": null,
+  "hasPenalty": false,
+  "finished": false
+}
+```
+
+**Errores:**
+- `404` — bicicleta no encontrada.
+- `409` — bicicleta no disponible (`ALQUILADA` o `EN_MANTENIMIENTO`).
+
+---
+
+#### `GET /api/rentals` — Consultar alquileres
+
+**Query params (opcional):**
+
+| Parámetro | Valores | Descripción |
+|---|---|---|
+| `finished` | `true` · `false` | Filtra por estado del alquiler. Sin parámetro devuelve todos. |
+
+**Respuesta `200`:** lista de alquileres con el mismo formato que `POST /api/rentals`.
+
+```bash
+GET /api/rentals                # historial completo
+GET /api/rentals?finished=false # solo activos
+GET /api/rentals?finished=true  # solo finalizados
+```
+
+---
+
+#### `PATCH /api/rentals/{id}/finish` — Finalizar alquiler
+
+**Path param:** `id` — ID del alquiler.
+
+No requiere body. La hora de devolución se captura automáticamente con `LocalDateTime.now()`.
+
+**Respuesta `200`:**
+```json
+{
+  "id": 1,
+  "bikeCode": "BIC-001",
+  "customerName": "Ana García",
+  "startTime": "2026-05-18T10:00:00",
+  "endTime": "2026-05-18T12:15:00",
+  "realDurationMinutes": 135,
+  "totalCost": 10500.00,
+  "hasPenalty": true,
+  "finished": true
+}
+```
+
+**Errores:**
+- `404` — alquiler no encontrado.
+- `409` — alquiler ya finalizado.
+
+```bash
+curl -X PATCH http://localhost:8080/api/rentals/1/finish
 ```
 
 
 ---
 
-## Reglas de negocio
 
-| Regla | Descripción |
-|---|---|
-| RN-01 | Tarifas por hora: URBANA $3.500, MONTANA $5.000, ELECTRICA $7.500 |
-| RN-02 | Costo base redondeado al alza (ceil) por hora |
-| RN-03 | Retraso cobra 50% de la tarifa/hora (ceil), calculado desde la hora estimada de devolución |
-| RN-04 | Iniciar alquiler en bicicleta no disponible → HTTP 409 |
-| RN-05 | Finalizar alquiler inexistente → 404 · ya finalizado → 409 |
 
 ## Supuestos tomados
 
