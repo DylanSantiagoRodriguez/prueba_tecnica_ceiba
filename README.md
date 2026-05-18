@@ -160,7 +160,7 @@ HTTP Request → Controller → UseCase (port in) → RentalService → Reposito
 | Mockito | incluida en starter-test | Mocks en tests de servicio |
 | MockMvc | incluida en starter-test | Tests de capa web |
 
-### Por qué PostgreSQL en Railway
+### PostgreSQL en Railway
 
 Base de datos gestionada, sin configuración local. El evaluador solo necesita un archivo `.env` con las variables `PG*` para conectarse. En producción (Railway), las variables se inyectan automáticamente.
 
