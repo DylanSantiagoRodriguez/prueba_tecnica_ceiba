@@ -50,7 +50,7 @@ public class Rental {
         this.endTime = returnTime;
 
         long realMinutes = Duration.between(startTime, returnTime).toMinutes();
-        long realHours = (long) Math.ceil(realMinutes / 60.0);
+        long realHours = Math.max(1, (long) Math.ceil(realMinutes / 60.0));
         BigDecimal baseCost = hourlyRate.multiply(BigDecimal.valueOf(realHours));
 
         LocalDateTime estimatedReturnTime = startTime.plusMinutes(estimatedMinutes);

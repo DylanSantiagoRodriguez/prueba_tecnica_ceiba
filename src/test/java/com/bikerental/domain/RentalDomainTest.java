@@ -23,6 +23,36 @@ class RentalDomainTest {
     }
 
     @Test
+    void costo_minimo_una_hora_cuando_duracion_es_cero() {
+        // Devolución inmediata → mínimo 1 hora
+        Rental rental = new Rental("BIC-001", "Ana", BASE, 120);
+        rental.finish(BASE, BikeType.URBANA.getHourlyRate());
+
+        assertCost(new BigDecimal("3500"), rental.getTotalCost());
+        assertFalse(rental.isHasPenalty());
+    }
+
+    @Test
+    void costo_minimo_una_hora_cuando_duracion_es_menor_a_60_min() {
+        // 45 minutos → se redondea al alza → 1 hora mínima
+        Rental rental = new Rental("BIC-001", "Ana", BASE, 120);
+        rental.finish(BASE.plusMinutes(45), BikeType.URBANA.getHourlyRate());
+
+        assertCost(new BigDecimal("3500"), rental.getTotalCost());
+        assertFalse(rental.isHasPenalty());
+    }
+
+    @Test
+    void devolucion_anticipada_cobra_tiempo_real_redondeado() {
+        // Estimado: 3h. Real: 40min → ceil(40/60)=1h → cobra 1h (no 3h)
+        Rental rental = new Rental("BIC-001", "Ana", BASE, 180);
+        rental.finish(BASE.plusMinutes(40), BikeType.URBANA.getHourlyRate());
+
+        assertCost(new BigDecimal("3500"), rental.getTotalCost());
+        assertFalse(rental.isHasPenalty());
+    }
+
+    @Test
     void costo_bicicleta_urbana_1h10min_cobra_2h() {
         Rental rental = new Rental("BIC-001", "Ana", BASE, 180);
         rental.finish(BASE.plusMinutes(70), BikeType.URBANA.getHourlyRate());
