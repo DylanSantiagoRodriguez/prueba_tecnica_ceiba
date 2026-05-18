@@ -40,3 +40,7 @@ build/
 planning_project.md
 CLAUDE.md
 .DS_Store
+
+### Credenciales locales — nunca subir
+.env
+bikerental.db
