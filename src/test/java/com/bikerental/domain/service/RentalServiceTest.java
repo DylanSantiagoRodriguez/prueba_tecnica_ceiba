@@ -4,6 +4,7 @@ import com.bikerental.application.dto.request.RegisterBikeRequest;
 import com.bikerental.application.dto.request.StartRentalRequest;
 import com.bikerental.application.dto.response.BikeResponse;
 import com.bikerental.application.dto.response.RentalResponse;
+import com.bikerental.domain.exception.BikeInUseException;
 import com.bikerental.domain.exception.BikeNotAvailableException;
 import com.bikerental.domain.exception.BikeNotFoundException;
 import com.bikerental.domain.exception.RentalAlreadyFinishedException;
@@ -27,7 +28,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -127,6 +127,46 @@ class RentalServiceTest {
     }
 
     @Test
+    void listar_todas_sin_filtros_retorna_todas() {
+        when(bikeRepository.findAll()).thenReturn(List.of(disponibleBike, alquiladaBike));
+
+        List<BikeResponse> result = service.getAllBikes(null, null);
+
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    void listar_con_filtro_status_retorna_filtradas() {
+        when(bikeRepository.findByStatus(BikeStatus.DISPONIBLE)).thenReturn(List.of(disponibleBike));
+
+        List<BikeResponse> result = service.getAllBikes(BikeStatus.DISPONIBLE, null);
+
+        assertEquals(1, result.size());
+        assertEquals(BikeStatus.DISPONIBLE, result.get(0).getStatus());
+    }
+
+    @Test
+    void listar_con_filtro_tipo_retorna_filtradas() {
+        when(bikeRepository.findByType(BikeType.URBANA)).thenReturn(List.of(disponibleBike));
+
+        List<BikeResponse> result = service.getAllBikes(null, BikeType.URBANA);
+
+        assertEquals(1, result.size());
+        assertEquals(BikeType.URBANA, result.get(0).getType());
+    }
+
+    @Test
+    void listar_con_status_y_tipo_combinados_retorna_filtradas() {
+        when(bikeRepository.findByStatusAndType(BikeStatus.DISPONIBLE, BikeType.URBANA))
+                .thenReturn(List.of(disponibleBike));
+
+        List<BikeResponse> result = service.getAllBikes(BikeStatus.DISPONIBLE, BikeType.URBANA);
+
+        assertEquals(1, result.size());
+        assertEquals("BIC-001", result.get(0).getCode());
+    }
+
+    @Test
     void consultar_disponibles_sin_filtro_retorna_todas() {
         when(bikeRepository.findByStatus(BikeStatus.DISPONIBLE))
                 .thenReturn(List.of(disponibleBike));
@@ -146,6 +186,31 @@ class RentalServiceTest {
 
         assertEquals(1, result.size());
         assertEquals(BikeType.URBANA, result.get(0).getType());
+    }
+
+    @Test
+    void eliminar_bicicleta_disponible_exitoso() {
+        when(bikeRepository.findByCode("BIC-001")).thenReturn(Optional.of(disponibleBike));
+        doNothing().when(bikeRepository).deleteByCode("BIC-001");
+
+        assertDoesNotThrow(() -> service.deleteBike("BIC-001"));
+        verify(bikeRepository).deleteByCode("BIC-001");
+    }
+
+    @Test
+    void eliminar_bicicleta_inexistente_lanza_BikeNotFoundException() {
+        when(bikeRepository.findByCode("BIC-999")).thenReturn(Optional.empty());
+
+        assertThrows(BikeNotFoundException.class, () -> service.deleteBike("BIC-999"));
+        verify(bikeRepository, never()).deleteByCode(any());
+    }
+
+    @Test
+    void eliminar_bicicleta_alquilada_lanza_BikeInUseException() {
+        when(bikeRepository.findByCode("BIC-002")).thenReturn(Optional.of(alquiladaBike));
+
+        assertThrows(BikeInUseException.class, () -> service.deleteBike("BIC-002"));
+        verify(bikeRepository, never()).deleteByCode(any());
     }
 
     @Test

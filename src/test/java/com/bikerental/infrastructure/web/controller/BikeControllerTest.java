@@ -43,6 +43,47 @@ class BikeControllerTest {
     @MockBean private GetRentalHistoryUseCase getRentalHistoryUseCase;
 
     @Test
+    void listar_todas_sin_filtros_retorna_200() throws Exception {
+        when(getAllBikesUseCase.getAllBikes(null, null))
+                .thenReturn(List.of(new BikeResponse("BIC-001", BikeType.URBANA, BikeStatus.DISPONIBLE)));
+
+        mockMvc.perform(get("/api/bikes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].code").value("BIC-001"));
+    }
+
+    @Test
+    void listar_filtrado_por_status_retorna_200() throws Exception {
+        when(getAllBikesUseCase.getAllBikes(BikeStatus.DISPONIBLE, null))
+                .thenReturn(List.of(new BikeResponse("BIC-001", BikeType.URBANA, BikeStatus.DISPONIBLE)));
+
+        mockMvc.perform(get("/api/bikes").param("status", "DISPONIBLE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].status").value("DISPONIBLE"));
+    }
+
+    @Test
+    void listar_filtrado_por_tipo_retorna_200() throws Exception {
+        when(getAllBikesUseCase.getAllBikes(null, BikeType.MONTANA))
+                .thenReturn(List.of(new BikeResponse("BIC-002", BikeType.MONTANA, BikeStatus.DISPONIBLE)));
+
+        mockMvc.perform(get("/api/bikes").param("type", "MONTANA"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].type").value("MONTANA"));
+    }
+
+    @Test
+    void listar_filtrado_por_status_y_tipo_combinados_retorna_200() throws Exception {
+        when(getAllBikesUseCase.getAllBikes(BikeStatus.DISPONIBLE, BikeType.ELECTRICA))
+                .thenReturn(List.of(new BikeResponse("BIC-003", BikeType.ELECTRICA, BikeStatus.DISPONIBLE)));
+
+        mockMvc.perform(get("/api/bikes").param("status", "DISPONIBLE").param("type", "ELECTRICA"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].type").value("ELECTRICA"))
+                .andExpect(jsonPath("$[0].status").value("DISPONIBLE"));
+    }
+
+    @Test
     void registrar_bicicleta_retorna_201() throws Exception {
         BikeResponse response = new BikeResponse("BIC-001", BikeType.URBANA, BikeStatus.DISPONIBLE);
         when(registerBikeUseCase.register(any())).thenReturn(response);
