@@ -31,3 +31,12 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### SQLite WAL files (temporales — NO subir)
+*.db-shm
+*.db-wal
+
+### Archivos locales de planificación
+planning_project.md
+CLAUDE.md
+.DS_Store
