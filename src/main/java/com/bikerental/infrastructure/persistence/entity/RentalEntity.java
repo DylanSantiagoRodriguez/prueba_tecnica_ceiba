@@ -22,7 +22,7 @@ public class RentalEntity {
     private LocalDateTime startTime;
 
     @Column(nullable = false)
-    private int estimatedHours;
+    private int estimatedMinutes;
 
     @Column(nullable = true)
     private LocalDateTime endTime;
@@ -47,8 +47,8 @@ public class RentalEntity {
     public LocalDateTime getStartTime() { return startTime; }
     public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
 
-    public int getEstimatedHours() { return estimatedHours; }
-    public void setEstimatedHours(int estimatedHours) { this.estimatedHours = estimatedHours; }
+    public int getEstimatedMinutes() { return estimatedMinutes; }
+    public void setEstimatedMinutes(int estimatedMinutes) { this.estimatedMinutes = estimatedMinutes; }
 
     public LocalDateTime getEndTime() { return endTime; }
     public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }

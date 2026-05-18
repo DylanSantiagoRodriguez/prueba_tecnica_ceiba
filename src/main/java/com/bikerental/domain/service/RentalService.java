@@ -1,6 +1,5 @@
 package com.bikerental.domain.service;
 
-import com.bikerental.application.dto.request.FinishRentalRequest;
 import com.bikerental.application.dto.request.RegisterBikeRequest;
 import com.bikerental.application.dto.request.StartRentalRequest;
 import com.bikerental.application.dto.response.BikeResponse;
@@ -28,6 +27,7 @@ public class RentalService implements
         FinishRentalUseCase,
         GetAvailableBikesUseCase,
         GetAllBikesUseCase,
+        GetActiveRentalsUseCase,
         GetRentalHistoryUseCase {
 
     private final BikeRepository bikeRepository;
@@ -61,14 +61,14 @@ public class RentalService implements
                 bike.getCode(),
                 request.getCustomerName(),
                 LocalDateTime.now(),
-                request.getEstimatedHours()
+                request.getEstimatedMinutes()
         );
         Rental saved = rentalRepository.save(rental);
         return toRentalResponse(saved);
     }
 
     @Override
-    public RentalResponse finishRental(Long rentalId, FinishRentalRequest request) {
+    public RentalResponse finishRental(Long rentalId) {
         Rental rental = rentalRepository.findById(rentalId)
                 .orElseThrow(() -> new RentalNotFoundException(rentalId));
 
@@ -79,7 +79,7 @@ public class RentalService implements
         Bike bike = bikeRepository.findByCode(rental.getBikeCode())
                 .orElseThrow(() -> new BikeNotFoundException(rental.getBikeCode()));
 
-        rental.finish(request.getReturnTime(), bike.getType().getHourlyRate());
+        rental.finish(LocalDateTime.now(), bike.getType().getHourlyRate());
         bike.markAsAvailable();
 
         rentalRepository.save(rental);
@@ -105,6 +105,12 @@ public class RentalService implements
     }
 
     @Override
+    public List<RentalResponse> getActiveRentals() {
+        return rentalRepository.findActive()
+                .stream().map(this::toRentalResponse).collect(Collectors.toList());
+    }
+
+    @Override
     public List<RentalResponse> getRentalHistory(String bikeCode) {
         return rentalRepository.findByBikeCode(bikeCode)
                 .stream()
@@ -117,10 +123,9 @@ public class RentalService implements
     }
 
     private RentalResponse toRentalResponse(Rental rental) {
-        Integer durationHours = null;
+        Integer durationMinutes = null;
         if (rental.isFinished()) {
-            long minutes = Duration.between(rental.getStartTime(), rental.getEndTime()).toMinutes();
-            durationHours = (int) Math.ceil(minutes / 60.0);
+            durationMinutes = (int) Duration.between(rental.getStartTime(), rental.getEndTime()).toMinutes();
         }
         return new RentalResponse(
                 rental.getId(),
@@ -128,7 +133,7 @@ public class RentalService implements
                 rental.getCustomerName(),
                 rental.getStartTime(),
                 rental.getEndTime(),
-                durationHours,
+                durationMinutes,
                 rental.getTotalCost(),
                 rental.isHasPenalty(),
                 rental.isFinished()

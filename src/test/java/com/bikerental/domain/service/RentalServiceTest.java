@@ -1,6 +1,5 @@
 package com.bikerental.domain.service;
 
-import com.bikerental.application.dto.request.FinishRentalRequest;
 import com.bikerental.application.dto.request.RegisterBikeRequest;
 import com.bikerental.application.dto.request.StartRentalRequest;
 import com.bikerental.application.dto.response.BikeResponse;
@@ -48,8 +47,8 @@ class RentalServiceTest {
     void setUp() {
         disponibleBike = new Bike("BIC-001", BikeType.URBANA, BikeStatus.DISPONIBLE);
         alquiladaBike = new Bike("BIC-002", BikeType.MONTANA, BikeStatus.ALQUILADA);
-        activeRental = new Rental(1L, "BIC-001", "Ana", NOW, 2, null, null, false);
-        finishedRental = new Rental(2L, "BIC-001", "Luis", NOW, 2,
+        activeRental = new Rental(1L, "BIC-001", "Ana", NOW, 120, null, null, false);
+        finishedRental = new Rental(2L, "BIC-001", "Luis", NOW, 120,
                 NOW.plusHours(2), java.math.BigDecimal.valueOf(7000), false);
     }
 
@@ -57,13 +56,13 @@ class RentalServiceTest {
     void iniciar_alquiler_bicicleta_disponible_exitoso() {
         when(bikeRepository.findByCode("BIC-001")).thenReturn(Optional.of(disponibleBike));
         when(bikeRepository.save(any())).thenReturn(disponibleBike);
-        Rental savedRental = new Rental(1L, "BIC-001", "Ana", NOW, 2, null, null, false);
+        Rental savedRental = new Rental(1L, "BIC-001", "Ana", NOW, 120, null, null, false);
         when(rentalRepository.save(any())).thenReturn(savedRental);
 
         StartRentalRequest req = new StartRentalRequest();
         req.setBikeCode("BIC-001");
         req.setCustomerName("Ana");
-        req.setEstimatedHours(2);
+        req.setEstimatedMinutes(120);
 
         RentalResponse resp = service.startRental(req);
 
@@ -81,7 +80,7 @@ class RentalServiceTest {
         StartRentalRequest req = new StartRentalRequest();
         req.setBikeCode("BIC-999");
         req.setCustomerName("Ana");
-        req.setEstimatedHours(2);
+        req.setEstimatedMinutes(120);
 
         assertThrows(BikeNotFoundException.class, () -> service.startRental(req));
     }
@@ -93,7 +92,7 @@ class RentalServiceTest {
         StartRentalRequest req = new StartRentalRequest();
         req.setBikeCode("BIC-002");
         req.setCustomerName("Ana");
-        req.setEstimatedHours(2);
+        req.setEstimatedMinutes(120);
 
         assertThrows(BikeNotAvailableException.class, () -> service.startRental(req));
     }
@@ -105,10 +104,7 @@ class RentalServiceTest {
         when(rentalRepository.save(any())).thenReturn(activeRental);
         when(bikeRepository.save(any())).thenReturn(disponibleBike);
 
-        FinishRentalRequest req = new FinishRentalRequest();
-        req.setReturnTime(NOW.plusHours(2));
-
-        RentalResponse resp = service.finishRental(1L, req);
+        RentalResponse resp = service.finishRental(1L);
 
         assertNotNull(resp);
         assertTrue(resp.isFinished());
@@ -120,20 +116,14 @@ class RentalServiceTest {
     void finalizar_alquiler_inexistente_lanza_RentalNotFoundException() {
         when(rentalRepository.findById(99L)).thenReturn(Optional.empty());
 
-        FinishRentalRequest req = new FinishRentalRequest();
-        req.setReturnTime(NOW.plusHours(2));
-
-        assertThrows(RentalNotFoundException.class, () -> service.finishRental(99L, req));
+        assertThrows(RentalNotFoundException.class, () -> service.finishRental(99L));
     }
 
     @Test
     void finalizar_alquiler_ya_terminado_lanza_RentalAlreadyFinishedException() {
         when(rentalRepository.findById(2L)).thenReturn(Optional.of(finishedRental));
 
-        FinishRentalRequest req = new FinishRentalRequest();
-        req.setReturnTime(NOW.plusHours(3));
-
-        assertThrows(RentalAlreadyFinishedException.class, () -> service.finishRental(2L, req));
+        assertThrows(RentalAlreadyFinishedException.class, () -> service.finishRental(2L));
     }
 
     @Test

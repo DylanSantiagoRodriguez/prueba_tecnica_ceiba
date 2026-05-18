@@ -9,4 +9,5 @@ public interface RentalRepository {
     Rental save(Rental rental);
     Optional<Rental> findById(Long id);
     List<Rental> findByBikeCode(String bikeCode);
+    List<Rental> findActive();
 }

@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface JpaRentalRepository extends JpaRepository<RentalEntity, Long> {
     List<RentalEntity> findByBikeCode(String bikeCode);
+    List<RentalEntity> findByEndTimeIsNull();
 }

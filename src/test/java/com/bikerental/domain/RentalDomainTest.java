@@ -24,7 +24,7 @@ class RentalDomainTest {
 
     @Test
     void costo_bicicleta_urbana_1h10min_cobra_2h() {
-        Rental rental = new Rental("BIC-001", "Ana", BASE, 3);
+        Rental rental = new Rental("BIC-001", "Ana", BASE, 180);
         rental.finish(BASE.plusMinutes(70), BikeType.URBANA.getHourlyRate());
 
         assertCost(new BigDecimal("7000"), rental.getTotalCost());
@@ -33,7 +33,7 @@ class RentalDomainTest {
 
     @Test
     void costo_exactamente_2_horas_cobra_2h() {
-        Rental rental = new Rental("BIC-001", "Ana", BASE, 3);
+        Rental rental = new Rental("BIC-001", "Ana", BASE, 180);
         rental.finish(BASE.plusHours(2), BikeType.URBANA.getHourlyRate());
 
         assertCost(new BigDecimal("7000"), rental.getTotalCost());
@@ -42,7 +42,7 @@ class RentalDomainTest {
 
     @Test
     void costo_bicicleta_electrica_tarifa_correcta() {
-        Rental rental = new Rental("BIC-003", "Pedro", BASE, 2);
+        Rental rental = new Rental("BIC-003", "Pedro", BASE, 120);
         rental.finish(BASE.plusHours(1), BikeType.ELECTRICA.getHourlyRate());
 
         assertCost(new BigDecimal("7500"), rental.getTotalCost());
@@ -53,10 +53,10 @@ class RentalDomainTest {
 
     @Test
     void multa_montana_3h20min_estimado_2h() {
-        // Ejemplo exacto del enunciado: MONTANA, 2h estimadas, devuelta 3h20min después
+        // MONTANA, 120min estimados, devuelta 3h20min después (200min)
         // real=200min → ceil=4h → base=4×5000=20000
-        // delay=80min → ceil=2h → multa=2×2500=5000 → total=25000
-        Rental rental = new Rental("BIC-002", "Luis", BASE, 2);
+        // delay desde min 120 hasta min 200 = 80min → ceil=2h → multa=2×2500=5000 → total=25000
+        Rental rental = new Rental("BIC-002", "Luis", BASE, 120);
         rental.finish(BASE.plusMinutes(200), BikeType.MONTANA.getHourlyRate());
 
         assertCost(new BigDecimal("25000"), rental.getTotalCost());
@@ -65,7 +65,7 @@ class RentalDomainTest {
 
     @Test
     void sin_multa_devolucion_exactamente_en_tiempo() {
-        Rental rental = new Rental("BIC-001", "Ana", BASE, 2);
+        Rental rental = new Rental("BIC-001", "Ana", BASE, 120);
         rental.finish(BASE.plusHours(2), BikeType.URBANA.getHourlyRate());
 
         assertFalse(rental.isHasPenalty());
@@ -74,7 +74,7 @@ class RentalDomainTest {
     @Test
     void multa_retraso_minimo_1_minuto_cobra_1_hora() {
         // 1 min de retraso → ceil(1/60.0)=1h de multa
-        Rental rental = new Rental("BIC-001", "Ana", BASE, 2);
+        Rental rental = new Rental("BIC-001", "Ana", BASE, 120);
         rental.finish(BASE.plusHours(2).plusMinutes(1), BikeType.URBANA.getHourlyRate());
 
         // base: ceil(121/60)=3h → 3×3500=10500
@@ -108,7 +108,7 @@ class RentalDomainTest {
 
     @Test
     void no_puede_finalizar_alquiler_ya_terminado() {
-        Rental rental = new Rental("BIC-001", "Ana", BASE, 2);
+        Rental rental = new Rental("BIC-001", "Ana", BASE, 120);
         rental.finish(BASE.plusHours(2), BikeType.URBANA.getHourlyRate());
 
         assertThrows(IllegalStateException.class,

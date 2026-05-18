@@ -13,7 +13,7 @@ public class RentalMapper {
                 entity.getBikeCode(),
                 entity.getCustomerName(),
                 entity.getStartTime(),
-                entity.getEstimatedHours(),
+                entity.getEstimatedMinutes(),
                 entity.getEndTime(),
                 entity.getTotalCost(),
                 entity.isHasPenalty()
@@ -25,7 +25,7 @@ public class RentalMapper {
         entity.setBikeCode(rental.getBikeCode());
         entity.setCustomerName(rental.getCustomerName());
         entity.setStartTime(rental.getStartTime());
-        entity.setEstimatedHours(rental.getEstimatedHours());
+        entity.setEstimatedMinutes(rental.getEstimatedMinutes());
         entity.setEndTime(rental.getEndTime());
         entity.setTotalCost(rental.getTotalCost());
         entity.setHasPenalty(rental.isHasPenalty());

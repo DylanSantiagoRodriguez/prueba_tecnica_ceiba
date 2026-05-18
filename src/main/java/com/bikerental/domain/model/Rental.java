@@ -10,26 +10,26 @@ public class Rental {
     private String bikeCode;
     private String customerName;
     private LocalDateTime startTime;
-    private int estimatedHours;
+    private int estimatedMinutes;
     private LocalDateTime endTime;
     private BigDecimal totalCost;
     private boolean hasPenalty;
 
-    public Rental(String bikeCode, String customerName, LocalDateTime startTime, int estimatedHours) {
+    public Rental(String bikeCode, String customerName, LocalDateTime startTime, int estimatedMinutes) {
         this.bikeCode = bikeCode;
         this.customerName = customerName;
         this.startTime = startTime;
-        this.estimatedHours = estimatedHours;
+        this.estimatedMinutes = estimatedMinutes;
         this.hasPenalty = false;
     }
 
     public Rental(Long id, String bikeCode, String customerName, LocalDateTime startTime,
-                  int estimatedHours, LocalDateTime endTime, BigDecimal totalCost, boolean hasPenalty) {
+                  int estimatedMinutes, LocalDateTime endTime, BigDecimal totalCost, boolean hasPenalty) {
         this.id = id;
         this.bikeCode = bikeCode;
         this.customerName = customerName;
         this.startTime = startTime;
-        this.estimatedHours = estimatedHours;
+        this.estimatedMinutes = estimatedMinutes;
         this.endTime = endTime;
         this.totalCost = totalCost;
         this.hasPenalty = hasPenalty;
@@ -53,7 +53,7 @@ public class Rental {
         long realHours = (long) Math.ceil(realMinutes / 60.0);
         BigDecimal baseCost = hourlyRate.multiply(BigDecimal.valueOf(realHours));
 
-        LocalDateTime estimatedReturnTime = startTime.plusHours(estimatedHours);
+        LocalDateTime estimatedReturnTime = startTime.plusMinutes(estimatedMinutes);
         BigDecimal penaltyCost = BigDecimal.ZERO;
 
         if (returnTime.isAfter(estimatedReturnTime)) {
@@ -72,7 +72,7 @@ public class Rental {
     public String getBikeCode() { return bikeCode; }
     public String getCustomerName() { return customerName; }
     public LocalDateTime getStartTime() { return startTime; }
-    public int getEstimatedHours() { return estimatedHours; }
+    public int getEstimatedMinutes() { return estimatedMinutes; }
     public LocalDateTime getEndTime() { return endTime; }
     public BigDecimal getTotalCost() { return totalCost; }
     public boolean isHasPenalty() { return hasPenalty; }

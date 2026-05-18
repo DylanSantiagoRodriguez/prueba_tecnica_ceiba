@@ -12,7 +12,7 @@ public class StartRentalRequest {
     private String customerName;
 
     @Positive
-    private int estimatedHours;
+    private int estimatedMinutes;
 
     public String getBikeCode() { return bikeCode; }
     public void setBikeCode(String bikeCode) { this.bikeCode = bikeCode; }
@@ -20,6 +20,6 @@ public class StartRentalRequest {
     public String getCustomerName() { return customerName; }
     public void setCustomerName(String customerName) { this.customerName = customerName; }
 
-    public int getEstimatedHours() { return estimatedHours; }
-    public void setEstimatedHours(int estimatedHours) { this.estimatedHours = estimatedHours; }
+    public int getEstimatedMinutes() { return estimatedMinutes; }
+    public void setEstimatedMinutes(int estimatedMinutes) { this.estimatedMinutes = estimatedMinutes; }
 }

@@ -10,21 +10,21 @@ public class RentalResponse {
     private String customerName;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private Integer realDurationHours;
+    private Integer realDurationMinutes;
     private BigDecimal totalCost;
     private boolean hasPenalty;
     private boolean finished;
 
     public RentalResponse(Long id, String bikeCode, String customerName,
                           LocalDateTime startTime, LocalDateTime endTime,
-                          Integer realDurationHours, BigDecimal totalCost,
+                          Integer realDurationMinutes, BigDecimal totalCost,
                           boolean hasPenalty, boolean finished) {
         this.id = id;
         this.bikeCode = bikeCode;
         this.customerName = customerName;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.realDurationHours = realDurationHours;
+        this.realDurationMinutes = realDurationMinutes;
         this.totalCost = totalCost;
         this.hasPenalty = hasPenalty;
         this.finished = finished;
@@ -35,7 +35,7 @@ public class RentalResponse {
     public String getCustomerName() { return customerName; }
     public LocalDateTime getStartTime() { return startTime; }
     public LocalDateTime getEndTime() { return endTime; }
-    public Integer getRealDurationHours() { return realDurationHours; }
+    public Integer getRealDurationHours() { return realDurationMinutes; }
     public BigDecimal getTotalCost() { return totalCost; }
     public boolean isHasPenalty() { return hasPenalty; }
     public boolean isFinished() { return finished; }

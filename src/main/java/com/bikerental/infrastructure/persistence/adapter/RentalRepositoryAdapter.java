@@ -45,4 +45,10 @@ public class RentalRepositoryAdapter implements RentalRepository {
         return jpaRepository.findByBikeCode(bikeCode)
                 .stream().map(RentalMapper::toDomain).collect(Collectors.toList());
     }
+
+    @Override
+    public List<Rental> findActive() {
+        return jpaRepository.findByEndTimeIsNull()
+                .stream().map(RentalMapper::toDomain).collect(Collectors.toList());
+    }
 }
